@@ -17,23 +17,8 @@ ycbcr[:,:,0] = cv.equalizeHist(ycbcr[:, :,0]) # Equalizando somente o canal de b
 
 fourier_transform = np.fft.fft2(ycbcr[:,:,0])
 fourier_shift = np.fft.fftshift(fourier_transform)
+magnitude_spectrum = 20*np.log(np.abs(fourier_shift))
 
-## Filtro passa-baixas ideal
-M,N,_ = original.shape
-H = np.zeros((M,N), dtype=np.float32)
-D0 = 100
-for u in range(M):
-    for v in range(N):
-        D = np.sqrt((u-M/2)**2 + (v-N/2)**2)
-        if D <= D0:
-            H[u,v] = 1
-        else:
-            H[u,v] = 0
-
-filtro = fourier_shift * H
-
-fourier_shift_inverso = np.fft.ifftshift(filtro)
-transformada_inversa = np.abs(np.fft.ifft2(fourier_shift_inverso))
 # Detecção HSV
 
 # Detecção YCbCr
@@ -54,9 +39,10 @@ transformada_inversa = np.abs(np.fft.ifft2(fourier_shift_inverso))
 # plt.axis('off')
 # plt.show()
 
-plt.imshow(np.log1p(np.abs(transformada_inversa)),
-           cmap='gray')
-plt.axis('off')
+plt.subplot(121),plt.imshow(cv.cvtColor(ycbcr, cv.COLOR_YCrCb2RGB))
+plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(122),plt.imshow(magnitude_spectrum, cmap = 'gray')
+plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
 plt.show()
 
 cv.waitKey(0)
