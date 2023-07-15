@@ -8,7 +8,7 @@ A ideia é realizar um processamento nas imagens de forma a extrair somente os r
 
 1. Equalização de Histograma
   - https://docs.opencv.org/4.x/d5/daf/tutorial_py_histogram_equalization.html
-2. Normalização
+2. Suavização
   - Filtro passa-baixas no domínio da frequência com auxilio da transformada de fourier
   - https://www.youtube.com/watch?v=YVBxM64kpkU
 3. Detecção de cor da pele, modelo YCrCb
