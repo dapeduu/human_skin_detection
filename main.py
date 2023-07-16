@@ -16,55 +16,30 @@ y_channel, cr_channel, cb_channel = cv.split(ycbcr)
 
 clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
 y_channel_equalized = cv.equalizeHist(y_channel) # Equalizando somente o canal de brilho
-ycbcr_equalized = cv.merge((y_channel_equalized, cr_channel, cb_channel))
-ycbcr_equalized_rgb = cv.cvtColor(original, cv.COLOR_YCrCb2RGB)
 
 # Suavização
 # https://www.youtube.com/watch?v=YVBxM64kpkU&t=206s
 
-# fourier_transform = np.fft.fft2(y_channel)
-# fourier_shift = np.fft.fftshift(fourier_transform)
+def low_pass_filter(image):
+    dft = cv.dft(np.float32(image),flags = cv.DFT_COMPLEX_OUTPUT)
+    dft_shift = np.fft.fftshift(dft)
 
-# rows, cols = y_channel.shape
-# crow, ccol = int(rows / 2), int(cols / 2)
-# mask = np.zeros((rows, cols), np.uint8)
-# mask[crow - 30:crow + 30, ccol - 30:ccol + 30] = 1
+    rows, cols = image.shape
+    crow,ccol = rows//2 , cols//2
 
-# fourier_shift_filtered = fourier_shift * mask
-# inverse_shift = np.fft.ifftshift(fourier_shift_filtered)
-# filtered_y_channel = np.fft.ifft2(inverse_shift)
-# filtered_y_channel = np.abs(filtered_y_channel)
-# filtered_ycbcr_image = cv.merge((filtered_y_channel, cb_channel, cr_channel))
+    # create a mask first, center square is 1, remaining all zeros
+    mask = np.zeros((rows,cols,2),np.uint8)
+    mask[crow-100:crow+100, ccol-100:ccol+100] = 1
 
-def truncate_v2(image, kernel):
-    m, n = kernel.shape
-    m = int((m-1) / 2)
+    # apply mask and inverse DFT
+    fshift = dft_shift*mask
+    f_ishift = np.fft.ifftshift(fshift)
+    img_back = cv.idft(f_ishift)
+    img_back = cv.magnitude(img_back[:,:,0],img_back[:,:,1])
 
-    for i in range(0, m):
-        line, row = image.shape
-        image = np.delete(image, line-1, 0)
-        image = np.delete(image, row-1, 1)
-        image = np.delete(image, 0, 0)
-        image = np.delete(image, 0, 1)
-    return image
+    filtered_image = cv.normalize(img_back, None, 0, 255, cv.NORM_MINMAX, dtype=cv.CV_8U)
 
-def low_pass_function(image):
-
-    # # Gaussian Filter (Smoothing)
-    # kernel = np.array([[1, 2, 1],
-    #                    [2, 4, 2],
-    #                    [1, 2, 1]]) / 16
-
-    # low pass filter
-    kernel = np.ones((3, 3)) / 9
-
-    convolved_image = image * kernel
-
-    truncated_image = truncate_v2(convolved_image, kernel)
-
-    low_pass_filtered_image = truncated_image
-
-    return low_pass_filtered_image
+    return filtered_image
 
 # Detecção HSV
 def hsv_detection(bgr_img):
@@ -91,15 +66,18 @@ def get_final_mask(ycbcr_mask, hsv_mask):
 
 # low_pass = apply_low_pass_filter(ycbcr_equalized_rgb, 1)
 
-hsv_mask = hsv_detection(original)
-ycbcr_mask = ycbcr_detection(original)
+low_pass = low_pass_filter(y_channel_equalized)
+ycbcr_equalized = cv.merge((low_pass, cr_channel, cb_channel))
+
+ycbcr_equalized_rgb = cv.cvtColor(ycbcr_equalized, cv.COLOR_YCrCb2RGB)
+
+hsv_mask = hsv_detection(ycbcr_equalized_rgb)
+ycbcr_mask = ycbcr_detection(ycbcr_equalized_rgb)
 
 result = get_final_mask(ycbcr_mask, hsv_mask)
 skin_image = cv.bitwise_and(original, original, mask=result)
 
 # Resultados
-
-
 
 plt.subplot(121), plt.imshow(hsv_mask, cmap='gray')
 plt.title('HSV Resultado'), plt.xticks([]), plt.yticks([])
