@@ -8,39 +8,6 @@ original = cv.imread("./images/input/11.png")
 assert original is not None, "file could not be read, check with os.path.exists()"
 
 
-# Equalização de histograma
-
-ycbcr = cv.cvtColor(original, cv.COLOR_BGR2YCrCb)
-
-y_channel, cr_channel, cb_channel = cv.split(ycbcr)
-
-clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-y_channel_equalized = cv.equalizeHist(y_channel) # Equalizando somente o canal de brilho
-
-# Suavização
-# https://www.youtube.com/watch?v=YVBxM64kpkU&t=206s
-
-def low_pass_filter(image):
-    dft = cv.dft(np.float32(image),flags = cv.DFT_COMPLEX_OUTPUT)
-    dft_shift = np.fft.fftshift(dft)
-
-    rows, cols = image.shape
-    crow,ccol = rows//2 , cols//2
-
-    # create a mask first, center square is 1, remaining all zeros
-    mask = np.zeros((rows,cols,2),np.uint8)
-    mask[crow-100:crow+100, ccol-100:ccol+100] = 1
-
-    # apply mask and inverse DFT
-    fshift = dft_shift*mask
-    f_ishift = np.fft.ifftshift(fshift)
-    img_back = cv.idft(f_ishift)
-    img_back = cv.magnitude(img_back[:,:,0],img_back[:,:,1])
-
-    filtered_image = cv.normalize(img_back, None, 0, 255, cv.NORM_MINMAX, dtype=cv.CV_8U)
-
-    return filtered_image
-
 # Detecção HSV
 def hsv_detection(bgr_img):
     hsv_img = cv.cvtColor(bgr_img, cv.COLOR_BGR2HSV)
@@ -64,15 +31,15 @@ def get_final_mask(ycbcr_mask, hsv_mask):
     return result
 
 
-# low_pass = apply_low_pass_filter(ycbcr_equalized_rgb, 1)
+ycbcr = cv.cvtColor(original, cv.COLOR_BGR2YCrCb)
 
-low_pass = low_pass_filter(y_channel_equalized)
-ycbcr_equalized = cv.merge((low_pass, cr_channel, cb_channel))
+y_channel, cr_channel, cb_channel = cv.split(ycbcr)
+y_channel_equalized = cv.equalizeHist(y_channel) # Equalizando somente o canal de brilho
+ycbcr_equalized = cv.merge((y_channel_equalized, cr_channel, cb_channel))
+ycbcr_equalized_rgb = cv.cvtColor(original, cv.COLOR_YCrCb2RGB)
 
-ycbcr_equalized_rgb = cv.cvtColor(ycbcr_equalized, cv.COLOR_YCrCb2RGB)
-
-hsv_mask = hsv_detection(ycbcr_equalized_rgb)
-ycbcr_mask = ycbcr_detection(ycbcr_equalized_rgb)
+hsv_mask = hsv_detection(original)
+ycbcr_mask = ycbcr_detection(original)
 
 result = get_final_mask(ycbcr_mask, hsv_mask)
 skin_image = cv.bitwise_and(original, original, mask=result)
