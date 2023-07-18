@@ -15,3 +15,11 @@ A ideia é realizar um processamento nas imagens de forma a extrair somente os r
 4. Detecção de cor da pele, modelo HSV
 5. Binarizar a imagem resultante
 6. Reduzir ruído
+
+# Montagem do resultado
+
+Podemos fazer uma montagem do resultado utilzando o [image magick](https://imagemagick.org/index.php).
+
+O seguinte comando foi usado na pasta de resultados pra fazer as montagens:
+`magick montage -tile 2x -label '%t' -geometry +5 -bordercolor blue -border 3 -resize x200 -pointsize 16 *.png result.png`
+
