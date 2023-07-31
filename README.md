@@ -23,3 +23,13 @@ Podemos fazer uma montagem do resultado utilzando o [image magick](https://image
 O seguinte comando foi usado na pasta de resultados pra fazer as montagens:
 `magick montage -tile 2x -label '%t' -geometry +5 -bordercolor blue -border 3 -resize x200 -pointsize 16 *.png result.png`
 
+# Resultados
+
+Não fomos capazes de reproduzir os mesmos resultados apresentados no artigo. Apesar de detectar a pele em condições ideais, algumas outras coisas acabam sendo consideradas como pele. As imagens abaixo mostram as imagens após cada processamento:
+
+
+
+<div style="display: flex; flex-direction: row">
+  <img src="/images/results/resultado_dapedu.png" alt="Resultado da Pedu" />
+  <img src="/images/results/resultado_artigo.png" alt="Resultado do Artigo" />
+</div>
